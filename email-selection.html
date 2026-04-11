@@ -167,8 +167,6 @@
     /* ── 如影框（query + 输入框） ── */
     .ruying-box {
       position: absolute;
-      left: 1069px;
-      top: 395px;
       width: 488px;
       display: none;
       flex-direction: column;
@@ -283,8 +281,6 @@
     /* ── 答案小窗口 ── */
     .answer-window {
       position: absolute;
-      left: 1092px;
-      top: 307px;
       width: 440px;
       background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(60px);
@@ -613,6 +609,7 @@
   const hint    = document.getElementById('hint');
   let selectedText = '';
   let savedRange = null; // 保存划词的 range，用于插入
+  let selectionPos = { cx: 800, ty: 400, by: 420 }; // 选区位置（画板坐标）
 
   document.addEventListener('mouseup', (e) => {
     setTimeout(() => {
@@ -640,7 +637,11 @@
 
     // 选区中心 x，选区顶部 y（画板坐标）
     const cx = (rect.left + rect.width  / 2 - bRect.left) / scale;
-    const ty = (rect.top               - bRect.top)  / scale;
+    const rx = (rect.right                  - bRect.left) / scale;
+    const lx = (rect.left                   - bRect.left) / scale;
+    const ty = (rect.top                    - bRect.top)  / scale;
+    const by = (rect.bottom                 - bRect.top)  / scale;
+    selectionPos = { cx, rx, lx, ty, by };
 
     const toolW = 452;
     let left = cx - toolW / 2;
@@ -677,17 +678,25 @@
   const queryTags  = document.querySelectorAll('.query-tag');
 
   function showRuyingBox() {
+    const ruyW = 488;
+    const toolLeft = parseInt(toolbar.style.left);
+    const toolTop  = parseInt(toolbar.style.top);
+    let left = toolLeft;
+    let top  = toolTop; // 顶部对齐 toolbar
+    left = Math.max(8, Math.min(left, 1600 - ruyW - 8));
+
+    ruyingBox.style.left = left + 'px';
+    ruyingBox.style.top  = top  + 'px';
     ruyingBox.classList.add('visible');
     // 先出输入框
     setTimeout(() => {
       aiInputBar.classList.add('show');
       aiInput.focus();
     }, 60);
-    // 再依次出 query（从下往上，反序）
-    const tags = Array.from(queryTags).reverse();
-    tags.forEach((tag, i) => {
-      setTimeout(() => tag.classList.add('show'), 180 + i * 120);
-    });
+    // 3 个 query 一起出现
+    setTimeout(() => {
+      queryTags.forEach(tag => tag.classList.add('show'));
+    }, 180);
   }
 
   function hideRuyingBox() {
@@ -733,6 +742,16 @@
   let currentAnswer  = '';
 
   function showAnswerWindow(query, answer) {
+    // 跟随如影框，左对齐，出现在如影框正下方
+    const rLeft = parseInt(ruyingBox.style.left) || parseInt(toolbar.style.left) || 200;
+    const rTop  = parseInt(ruyingBox.style.top)  || 400;
+    const awW = 440;
+    let left = rLeft;
+    let top  = rTop;
+    left = Math.max(8, Math.min(left, 1600 - awW - 8));
+    answerWindow.style.left = left + 'px';
+    answerWindow.style.top  = top  + 'px';
+
     // 重置
     currentAnswer = answer;
     awUserBubble.textContent = query;
