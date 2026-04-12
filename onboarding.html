@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>新手引导 - AI Key</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .artboard {
+      position: absolute;
+      width: 1600px;
+      height: 1000px;
+      top: 50%;
+      left: 50%;
+      transform-origin: center center;
+      overflow: hidden;
+    }
+
+    .artboard > .bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* 悬浮球 */
+    .float-ball {
+      position: absolute;
+      right: 14px;
+      bottom: 82px;
+      width: 72px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .float-ball-inner {
+      width: 48px;
+      height: 48px;
+      border-radius: 28.6px;
+      box-shadow: 0 3.7px 3.7px rgba(0,0,0,0.25);
+      overflow: hidden;
+      background: linear-gradient(135deg, #6e7bff, #c45fe0, #ff6778);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .float-ball-inner img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: absolute;
+      right: 14px;
+      bottom: 162px;
+      width: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none;
+    }
+
+    .tooltip.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .tooltip-body {
+      width: 220px;
+      background: rgba(0, 0, 0, 0.84);
+      backdrop-filter: blur(25px);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.16);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tooltip-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      line-height: 20px;
+    }
+
+    .tooltip-desc {
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      line-height: 16px;
+    }
+
+    .tooltip-keys {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .key-btn {
+      background: #333539;
+      border-radius: 8px;
+      padding: 9px 8px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.8);
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      line-height: 16px;
+      box-shadow: 0 4px 0 #0c0e12, inset 0 2px 1px rgba(255,255,255,0.1);
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .key-plus {
+      font-size: 14px;
+      color: #fff;
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      line-height: 20px;
+    }
+
+    .tooltip-cta {
+      font-size: 12px;
+      color: #3b83f7;
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      line-height: 16px;
+      text-align: center;
+    }
+
+    /* 箭头（指向悬浮球） */
+    .tooltip-arrow {
+      width: 14px;
+      height: 6px;
+      margin-right: 29px;
+      position: relative;
+    }
+
+    .tooltip-arrow::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 6px solid rgba(0,0,0,0.84);
+    }
+
+    /* 关闭按钮 */
+    .tooltip-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      opacity: 0.5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.15s;
+    }
+    .tooltip-close:hover { opacity: 1; }
+    .tooltip-close svg { width: 10px; height: 10px; }
+
+    /* 悬浮球脉冲动画 */
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(110,123,255,0.5); }
+      70%  { box-shadow: 0 0 0 12px rgba(110,123,255,0); }
+      100% { box-shadow: 0 0 0 0 rgba(110,123,255,0); }
+    }
+    .float-ball-inner.pulse {
+      animation: pulse 1.8s ease-out infinite;
+    }
+  </style>
+</head>
+<body>
+
+<div class="artboard" id="artboard">
+  <img class="bg" src="assets/desktop-bg.png" alt="">
+
+  <!-- Tooltip -->
+  <div class="tooltip" id="tooltip">
+    <div class="tooltip-body">
+      <div class="tooltip-close" id="tooltipClose">
+        <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1 1L9 9M9 1L1 9" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="tooltip-title">快速唤起天禧</div>
+        <div class="tooltip-desc">按下快捷键即可随时呼出</div>
+      </div>
+      <div class="tooltip-keys">
+        <div class="key-btn">Alt</div>
+        <div class="key-plus">+</div>
+        <div class="key-btn">Space</div>
+      </div>
+      <div class="tooltip-cta">现在试试 ↓</div>
+    </div>
+    <div class="tooltip-arrow"></div>
+  </div>
+
+  <!-- 悬浮球 -->
+  <div class="float-ball" id="floatBall">
+    <div class="float-ball-inner pulse" id="floatBallInner">
+      <img src="assets/tianxi-icon2.svg" alt="">
+    </div>
+  </div>
+</div>
+
+<script>
+  // 缩放适配
+  function scaleArtboard() {
+    const board = document.getElementById('artboard');
+    const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 1000);
+    board.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  }
+  scaleArtboard();
+  window.addEventListener('resize', scaleArtboard);
+
+  // 延迟显示 tooltip
+  setTimeout(() => {
+    document.getElementById('tooltip').classList.add('show');
+  }, 600);
+
+  // 关闭 tooltip
+  document.getElementById('tooltipClose').addEventListener('click', () => {
+    document.getElementById('tooltip').classList.remove('show');
+    document.getElementById('floatBallInner').classList.remove('pulse');
+  });
+
+  // 点击悬浮球关闭 tooltip
+  document.getElementById('floatBall').addEventListener('click', () => {
+    document.getElementById('tooltip').classList.remove('show');
+    document.getElementById('floatBallInner').classList.remove('pulse');
+  });
+
+  // 监听 Alt+Space
+  document.addEventListener('keydown', (e) => {
+    if (e.altKey && e.code === 'Space') {
+      e.preventDefault();
+      document.getElementById('tooltip').classList.remove('show');
+      document.getElementById('floatBallInner').classList.remove('pulse');
+    }
+  });
+</script>
+</body>
+</html>
