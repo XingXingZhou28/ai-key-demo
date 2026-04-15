@@ -178,26 +178,6 @@
       pointer-events: auto;
     }
 
-    /* 语音识别文字 */
-    .voice-text {
-      color: rgba(255,255,255,0.9);
-      font-size: 18px;
-      font-family: 'Microsoft YaHei', sans-serif;
-      text-align: center;
-      min-height: 28px;
-      position: relative;
-      z-index: 2;
-    }
-    .voice-text .cursor {
-      display: inline-block;
-      width: 2px; height: 18px;
-      background: rgba(255,255,255,0.7);
-      margin-left: 2px;
-      vertical-align: middle;
-      animation: blink 0.8s step-end infinite;
-    }
-    @keyframes blink { 50% { opacity: 0; } }
-
     /* 底部渐变遮罩 */
     .voice-bg-mask {
       position: absolute;
@@ -322,18 +302,69 @@
     .voice-close.show { opacity: 1; pointer-events: auto; }
     .voice-close:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.1); }
 
-    /* 识别文字浮在球上方 */
-    .voice-text-wrap {
+    /* 识别输入条（液态胶囊） */
+    .liquid-bar {
       position: absolute;
-      bottom: 310px;
+      bottom: 28px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 3;
-      opacity: 0;
-      transition: opacity 0.3s ease;
+      height: 68px;
+      width: 68px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255,255,255,0.9);
+      border-radius: 100px;
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      gap: 16px;
+      overflow: hidden;
       white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 3;
+      box-shadow:
+        inset 6px 6px 1px -7px rgba(255,255,255,0.75),
+        inset -6px -6px 1px -7px rgba(255,255,255,0.8),
+        inset 2px 2px 2px -1px rgba(255,255,255,0.75),
+        inset -2px -2px 2px -1px rgba(255,255,255,0.75),
+        inset 0 0 2px 2px rgba(153,153,153,0.15),
+        inset 0 0 35px 0 rgba(242,242,242,0.15);
+      transition: opacity 0.3s ease;
     }
-    .voice-text-wrap.show { opacity: 1; }
+    .liquid-bar.show {
+      opacity: 1;
+      pointer-events: auto;
+      animation: liquidGrow 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes liquidGrow {
+      0%   { width: 68px; }
+      100% { width: 304px; }
+    }
+    .lb-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 38% 36%, #6b8fff 0%, #335eff 50%, #1a3acc 100%);
+      box-shadow: 0 0 16px rgba(51,94,255,0.7), 0 0 32px rgba(51,94,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .lb-icon img { width: 16px; height: 16px; }
+    .lb-text {
+      color: rgba(255,255,255,0.92);
+      font-size: 16px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      line-height: 26px;
+      flex: 1;
+      min-width: 0;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .liquid-bar.typing .lb-text { opacity: 1; }
 
     /* ── AI 结果窗口 ── */
     .result-window {
@@ -462,6 +493,7 @@
       vertical-align: middle;
       animation: blink 0.8s step-end infinite;
     }
+    @keyframes blink { 50% { opacity: 0; } }
   </style>
 </head>
 <body>
@@ -499,9 +531,10 @@
   <!-- 底部渐变遮罩 -->
   <div class="voice-bg-mask" id="voiceBgMask"></div>
 
-  <!-- 识别文字 -->
-  <div class="voice-text-wrap" id="voiceTextWrap">
-    <div class="voice-text" id="voiceText"></div>
+  <!-- 识别输入条 -->
+  <div class="liquid-bar" id="liquidBar">
+    <div class="lb-icon"><img src="assets/voice-mic-icon.svg" alt=""></div>
+    <div class="lb-text" id="lbText"></div>
   </div>
 
   <!-- 语音球 -->
@@ -578,8 +611,8 @@
   const aiKeyHint    = document.getElementById('aiKeyHint');
   const voiceBgMask  = document.getElementById('voiceBgMask');
   const voiceBallWrap= document.getElementById('voiceBallWrap');
-  const voiceTextWrap= document.getElementById('voiceTextWrap');
-  const voiceText    = document.getElementById('voiceText');
+  const liquidBar    = document.getElementById('liquidBar');
+  const lbText       = document.getElementById('lbText');
   const voiceClose   = document.getElementById('voiceClose');
   const resultWindow = document.getElementById('resultWindow');
   const rwQuery      = document.getElementById('rwQuery');
@@ -617,8 +650,12 @@
       voiceClose.classList.add('show');
       // 稍后开始识别文字
       setTimeout(() => {
-        voiceTextWrap.classList.add('show');
-        typeVoice();
+        liquidBar.classList.add('show');
+        // 等胶囊展开后再打字
+        setTimeout(() => {
+          liquidBar.classList.add('typing');
+          typeVoice();
+        }, 500);
       }, 800);
     }, 300);
   }
@@ -628,7 +665,7 @@
     let i = 0;
     const cursor = document.createElement('span');
     cursor.className = 'cursor';
-    voiceText.appendChild(cursor);
+    lbText.appendChild(cursor);
 
     function next() {
       if (i < VOICE_INPUT.length) {
@@ -636,7 +673,6 @@
         voiceTimer = setTimeout(next, 80);
       } else {
         cursor.remove();
-        // 识别完毕，稍等后弹出结果
         setTimeout(showResult, 800);
       }
     }
@@ -646,7 +682,8 @@
   function showResult() {
     voiceBgMask.classList.remove('show');
     voiceBallWrap.classList.remove('show');
-    voiceTextWrap.classList.remove('show');
+    liquidBar.classList.remove('show');
+    liquidBar.classList.remove('typing');
     voiceClose.classList.remove('show');
     rwQuery.textContent = VOICE_INPUT;
     rwContent.innerHTML = '';
@@ -701,10 +738,11 @@
 
   voiceClose.addEventListener('click', () => {
     clearTimeout(voiceTimer);
-    voiceText.innerHTML = '';
+    lbText.innerHTML = '';
     voiceBgMask.classList.remove('show');
     voiceBallWrap.classList.remove('show');
-    voiceTextWrap.classList.remove('show');
+    liquidBar.classList.remove('show');
+    liquidBar.classList.remove('typing');
     voiceClose.classList.remove('show');
     setTimeout(() => aiKeyHint.classList.add('show'), 300);
   });
