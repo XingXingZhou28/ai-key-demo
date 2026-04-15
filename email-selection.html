@@ -130,7 +130,7 @@
       flex-shrink: 0;
       margin-right: 2px;
     }
-    .ai-bar { width: 2px; height: 12px; background: rgba(255,255,255,0.7); border-radius: 1px; }
+    .ai-grip { width: 6px; height: 12px; flex-shrink: 0; }
     .ai-star { width: 20px; height: 20px; }
     .ai-star img { width: 100%; height: 100%; }
 
@@ -282,20 +282,38 @@
     .answer-window {
       position: absolute;
       width: 440px;
+      min-width: 440px;
+      min-height: 320px;
       background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(60px);
       border: 1px solid rgba(255,255,255,0.4);
       border-radius: 28px;
-      overflow: hidden;
+      overflow: visible;
       display: none;
       flex-direction: column;
       z-index: 400;
       opacity: 0;
       transform: scale(0.96) translateY(6px);
       transition: opacity 0.2s ease, transform 0.2s ease;
+      box-sizing: border-box;
     }
     .answer-window.visible { display: flex; }
     .answer-window.show { opacity: 1; transform: scale(1) translateY(0); }
+    .answer-window.dragging, .answer-window.resizing { transition: none; user-select: none; }
+
+    /* resize handles */
+    .resize-handle {
+      position: absolute;
+      z-index: 10;
+    }
+    .resize-handle.n  { top: -4px; left: 16px; right: 16px; height: 8px; cursor: n-resize; }
+    .resize-handle.s  { bottom: -4px; left: 16px; right: 16px; height: 8px; cursor: s-resize; }
+    .resize-handle.e  { right: -4px; top: 16px; bottom: 16px; width: 8px; cursor: e-resize; }
+    .resize-handle.w  { left: -4px; top: 16px; bottom: 16px; width: 8px; cursor: w-resize; }
+    .resize-handle.ne { top: -4px; right: -4px; width: 20px; height: 20px; cursor: ne-resize; border-radius: 0 28px 0 0; }
+    .resize-handle.nw { top: -4px; left: -4px; width: 20px; height: 20px; cursor: nw-resize; border-radius: 28px 0 0 0; }
+    .resize-handle.se { bottom: -4px; right: -4px; width: 20px; height: 20px; cursor: se-resize; border-radius: 0 0 28px 0; }
+    .resize-handle.sw { bottom: -4px; left: -4px; width: 20px; height: 20px; cursor: sw-resize; border-radius: 0 0 0 28px; }
 
     /* 标题栏 */
     .aw-header {
@@ -329,9 +347,16 @@
       flex-direction: column;
       gap: 16px;
       overflow-y: auto;
-      max-height: 320px;
+      flex: 1 1 auto;
+      min-height: 0;
       margin-bottom: 20px;
     }
+
+    /* 自定义滚动条 */
+    .aw-content::-webkit-scrollbar { width: 4px; }
+    .aw-content::-webkit-scrollbar-track { background: transparent; }
+    .aw-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+    .aw-content::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
 
     /* 用户气泡 */
     .aw-user-bubble {
@@ -421,6 +446,68 @@
     }
     .aw-input-field::placeholder { color: rgba(255,255,255,0.4); }
 
+    /* ── 翻译小窗口（复用 answer-window 样式） ── */
+    .translate-window {
+      position: absolute;
+      width: 440px;
+      min-width: 440px;
+      min-height: 320px;
+      background: rgba(0, 0, 0, 0.84);
+      backdrop-filter: blur(60px);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 28px;
+      overflow: visible;
+      display: none;
+      flex-direction: column;
+      z-index: 400;
+      opacity: 0;
+      transform: scale(0.96) translateY(6px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      box-sizing: border-box;
+    }
+    .translate-window.visible { display: flex; }
+    .translate-window.show { opacity: 1; transform: scale(1) translateY(0); }
+    .translate-window.dragging, .translate-window.resizing { transition: none; user-select: none; }
+
+    /* ── 润色小窗口 ── */
+    .polish-window {
+      position: absolute;
+      width: 440px;
+      min-width: 440px;
+      min-height: 320px;
+      background: rgba(0, 0, 0, 0.84);
+      backdrop-filter: blur(60px);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 28px;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+      z-index: 400;
+      opacity: 0;
+      transform: scale(0.96) translateY(6px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      box-sizing: border-box;
+    }
+    .polish-window.visible { display: flex; }
+    .polish-window.show { opacity: 1; transform: scale(1) translateY(0); }
+    .polish-window.dragging, .polish-window.resizing { transition: none; user-select: none; }
+
+    /* aw-content 高度随窗口伸缩 */
+
+    /* 翻译结果区 */
+    .tw-result {
+      color: rgba(255,255,255,0.92);
+      font-size: 16px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      line-height: 26px;
+      width: 100%;
+    }
+    .tw-result .typing-cursor {
+      display: inline-block; width: 2px; height: 16px;
+      background: rgba(255,255,255,0.7); margin-left: 2px;
+      vertical-align: middle; animation: blink 0.8s step-end infinite;
+    }
+
   </style>
 </head>
 <body>
@@ -450,8 +537,15 @@
   <div class="toolbar" id="toolbar">
     <div class="toolbar-body">
       <div class="ai-icon">
-        <div class="ai-bar"></div>
-        <div class="ai-bar"></div>
+        <!-- 6-dot grip icon (2×3) from Figma 582:18811 -->
+        <svg class="ai-grip" viewBox="0 0 6 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="1" cy="1"  r="1" fill="white" fill-opacity="0.48"/>
+          <circle cx="1" cy="6"  r="1" fill="white" fill-opacity="0.48"/>
+          <circle cx="1" cy="11" r="1" fill="white" fill-opacity="0.48"/>
+          <circle cx="5" cy="1"  r="1" fill="white" fill-opacity="0.48"/>
+          <circle cx="5" cy="6"  r="1" fill="white" fill-opacity="0.48"/>
+          <circle cx="5" cy="11" r="1" fill="white" fill-opacity="0.48"/>
+        </svg>
         <div class="ai-star">
           <img src="assets/ai-star.svg" alt="">
         </div>
@@ -461,11 +555,11 @@
           <img src="assets/icon-search.svg" alt="">
           <span>搜索</span>
         </div>
-        <div class="tool-btn" onclick="handleAction('翻译')">
+        <div class="tool-btn" onclick="handleTranslate()">
           <span style="font-size:12px;opacity:.8">中/A</span>
           <span>翻译</span>
         </div>
-        <div class="tool-btn" onclick="handleAction('润色')">
+        <div class="tool-btn" onclick="handlePolish()">
           <img src="assets/icon-polish.svg" alt="">
           <span>润色</span>
         </div>
@@ -521,7 +615,15 @@
 
   <!-- 答案小窗口 -->
   <div class="answer-window" id="answerWindow">
-    <div class="aw-header">
+    <div class="resize-handle n"></div>
+    <div class="resize-handle s"></div>
+    <div class="resize-handle e"></div>
+    <div class="resize-handle w"></div>
+    <div class="resize-handle ne"></div>
+    <div class="resize-handle nw"></div>
+    <div class="resize-handle se"></div>
+    <div class="resize-handle sw"></div>
+    <div class="aw-header" style="cursor:move">
       <div class="aw-header-left">
         <div class="aw-header-icon"><img src="assets/aw-icon1.svg" alt=""></div>
         <div class="aw-header-icon"><img src="assets/aw-icon2.svg" alt=""></div>
@@ -592,7 +694,153 @@
     </div>
   </div>
 
-</div>
+  <!-- 翻译小窗口 -->
+  <div class="translate-window" id="translateWindow">
+    <div class="resize-handle n"></div>
+    <div class="resize-handle s"></div>
+    <div class="resize-handle e"></div>
+    <div class="resize-handle w"></div>
+    <div class="resize-handle ne"></div>
+    <div class="resize-handle nw"></div>
+    <div class="resize-handle se"></div>
+    <div class="resize-handle sw"></div>
+    <div class="aw-header" style="cursor:move">
+      <div class="aw-header-left">
+        <div class="aw-header-icon"><img src="assets/aw-icon1.svg" alt=""></div>
+        <div class="aw-header-icon"><img src="assets/aw-icon2.svg" alt=""></div>
+      </div>
+      <div class="aw-title">
+        <img src="assets/tianxi-icon2.svg" alt="">
+        天禧AI
+      </div>
+      <div class="aw-header-right">
+        <div class="aw-ctrl" title="最小化">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="6" y="11" width="12" height="2" rx="1" fill="rgba(255,255,255,0.6)"/></svg>
+        </div>
+        <div class="aw-ctrl" id="twClose" title="关闭">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M7 7L17 17M17 7L7 17" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="aw-content">
+      <div class="aw-user-bubble" id="twUserBubble"></div>
+      <div class="aw-answer" id="twResult"></div>
+    </div>
+
+    <div class="aw-actions" id="twActions" style="display:none">
+      <div class="aw-action-group">
+        <div class="aw-action-btn" onclick="handleTwInsert()">
+          <img src="assets/icon-insert.svg" alt=""><span>插入</span>
+        </div>
+        <div class="aw-action-btn" onclick="handleTwReplace()">
+          <img src="assets/icon-replace.svg" alt=""><span>替换</span>
+        </div>
+        <div class="aw-action-btn">
+          <img src="assets/icon-read.svg" alt=""><span>朗读</span>
+        </div>
+        <div class="aw-action-btn">
+          <img src="assets/icon-retry.svg" alt=""><span>重答</span>
+        </div>
+        <div class="aw-action-btn">
+          <img src="assets/icon-copy2.svg" alt=""><span>复制</span>
+        </div>
+        <div class="aw-action-btn"><img src="assets/icon-like.svg" alt=""></div>
+        <div class="aw-action-btn"><img src="assets/icon-dislike.svg" alt=""></div>
+      </div>
+    </div>
+
+    <div class="aw-input-bar">
+      <input class="aw-input-field" type="text" placeholder="需要我帮你做什么">
+      <div class="input-actions">
+        <div class="input-icon-btn"><img src="assets/icon-add.svg" alt=""></div>
+        <div class="input-icon-btn">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="6" y="1" width="6" height="10" rx="3" fill="rgba(255,255,255,0.8)"/>
+            <path d="M3 9C3 12.3137 5.68629 15 9 15C12.3137 15 15 12.3137 15 9" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="9" y1="15" x2="9" y2="17" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="input-divider"></div>
+        <div class="send-btn"><img src="assets/icon-send.svg" alt=""></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 润色小窗口 -->
+  <div class="polish-window" id="polishWindow">
+    <div class="resize-handle n"></div>
+    <div class="resize-handle s"></div>
+    <div class="resize-handle e"></div>
+    <div class="resize-handle w"></div>
+    <div class="resize-handle ne"></div>
+    <div class="resize-handle nw"></div>
+    <div class="resize-handle se"></div>
+    <div class="resize-handle sw"></div>
+    <div class="aw-header" style="cursor:move">
+      <div class="aw-header-left">
+        <div class="aw-header-icon"><img src="assets/aw-icon1.svg" alt=""></div>
+        <div class="aw-header-icon"><img src="assets/aw-icon2.svg" alt=""></div>
+      </div>
+      <div class="aw-title">
+        <img src="assets/tianxi-icon2.svg" alt="">
+        天禧AI
+      </div>
+      <div class="aw-header-right">
+        <div class="aw-ctrl" title="最小化">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="6" y="11" width="12" height="2" rx="1" fill="rgba(255,255,255,0.6)"/></svg>
+        </div>
+        <div class="aw-ctrl" id="pwClose" title="关闭">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M7 7L17 17M17 7L7 17" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="aw-content">
+      <div class="aw-user-bubble" id="pwUserBubble"></div>
+      <div class="aw-answer" id="pwResult"></div>
+    </div>
+
+    <div class="aw-actions" id="pwActions" style="display:none">
+      <div class="aw-action-group">
+        <div class="aw-action-btn" onclick="handlePwInsert()">
+          <img src="assets/icon-insert.svg" alt=""><span>插入</span>
+        </div>
+        <div class="aw-action-btn" onclick="handlePwReplace()">
+          <img src="assets/icon-replace.svg" alt=""><span>替换</span>
+        </div>
+        <div class="aw-action-btn">
+          <img src="assets/icon-read.svg" alt=""><span>朗读</span>
+        </div>
+        <div class="aw-action-btn">
+          <img src="assets/icon-retry.svg" alt=""><span>重答</span>
+        </div>
+        <div class="aw-action-btn">
+          <img src="assets/icon-copy2.svg" alt=""><span>复制</span>
+        </div>
+        <div class="aw-action-btn"><img src="assets/icon-like.svg" alt=""></div>
+        <div class="aw-action-btn"><img src="assets/icon-dislike.svg" alt=""></div>
+      </div>
+    </div>
+
+    <div class="aw-input-bar">
+      <input class="aw-input-field" type="text" placeholder="需要我帮你做什么">
+      <div class="input-actions">
+        <div class="input-icon-btn"><img src="assets/icon-add.svg" alt=""></div>
+        <div class="input-icon-btn">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="6" y="1" width="6" height="10" rx="3" fill="rgba(255,255,255,0.8)"/>
+            <path d="M3 9C3 12.3137 5.68629 15 9 15C12.3137 15 15 12.3137 15 9" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="9" y1="15" x2="9" y2="17" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="input-divider"></div>
+        <div class="send-btn"><img src="assets/icon-send.svg" alt=""></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /artboard -->
 
 <script>
   // ── 缩放适配 ──
@@ -617,8 +865,11 @@
       const text = sel ? sel.toString().trim() : '';
       if (text.length > 0) {
         selectedText = text;
-        // 保存 range 用于后续插入
         if (sel.rangeCount > 0) savedRange = sel.getRangeAt(0).cloneRange();
+        // 清除之前的插入/替换高亮
+        document.querySelectorAll('.inserted-highlight').forEach(el => {
+          el.replaceWith(document.createTextNode(el.textContent));
+        });
         positionToolbar(sel);
         hint.classList.add('hidden');
       } else if (!toolbar.contains(e.target)) {
@@ -749,10 +1000,13 @@
     let left = rLeft;
     let top  = rTop;
     left = Math.max(8, Math.min(left, 1600 - awW - 8));
-    answerWindow.style.left = left + 'px';
-    answerWindow.style.top  = top  + 'px';
+    answerWindow.style.left   = left + 'px';
+    answerWindow.style.top    = top  + 'px';
+    answerWindow.style.width  = '440px';
+    answerWindow.style.height = '';
 
-    // 重置
+    // 重置，生成期间禁用拖拽
+    awDR.disable();
     currentAnswer = answer;
     awUserBubble.textContent = query;
     awAnswer.innerHTML = '';
@@ -778,6 +1032,7 @@
       } else {
         cursor.remove();
         awActions.style.display = 'flex';
+        awDR.enable(); // 生成完毕，启用拖拽
       }
     }
     setTimeout(typeNext, 300);
@@ -826,6 +1081,335 @@
       hideRuyingBox();
     }
   });
+  // ── 通用打字动画 ──
+  function typeInto(el, text, speed, onDone) {
+    el.innerHTML = '';
+    const cursor = document.createElement('span');
+    cursor.className = 'typing-cursor';
+    el.appendChild(cursor);
+    let i = 0;
+    function next() {
+      if (i < text.length) {
+        cursor.before(document.createTextNode(text[i++]));
+        setTimeout(next, speed);
+      } else {
+        cursor.remove();
+        if (onDone) onDone();
+      }
+    }
+    setTimeout(next, 300);
+  }
+
+  // ── 翻译窗口 ──
+  const translateWindow = document.getElementById('translateWindow');
+  const twUserBubble    = document.getElementById('twUserBubble');
+  const twResult        = document.getElementById('twResult');
+  const twActions       = document.getElementById('twActions');
+  let currentTranslation = '';
+
+  function handleTranslate() {
+    const text = selectedText;
+    hideToolbar();
+    if (!text) return;
+    showTranslateWindow(text, null); // null = loading
+  }
+
+  function showTranslateWindow(original, translation) {
+    const rLeft = parseInt(toolbar.style.left) || 700;
+    const rTop  = parseInt(toolbar.style.top)  || 400;
+    const twW = 440;
+    let left = Math.max(8, Math.min(rLeft, 1600 - twW - 8));
+    translateWindow.style.left   = left + 'px';
+    translateWindow.style.top    = rTop + 'px';
+    translateWindow.style.width  = '440px';
+    translateWindow.style.height = '';
+
+    twDR.disable();
+    twUserBubble.textContent = original;
+    twResult.innerHTML = '';
+    twActions.style.display = 'none';
+    currentTranslation = '';
+
+    translateWindow.classList.add('visible');
+    requestAnimationFrame(() => requestAnimationFrame(() => translateWindow.classList.add('show')));
+
+    if (translation) {
+      typeInto(twResult, translation, 22, () => {
+        currentTranslation = translation;
+        twActions.style.display = 'flex';
+        twDR.enable();
+      });
+    } else {
+      twResult.innerHTML = '<span style="color:rgba(255,255,255,0.4)">翻译中...</span>';
+      fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(original)}&langpair=zh-CN|en`)
+        .then(r => r.json())
+        .then(data => {
+          const result = data.responseData?.translatedText || '翻译失败，请重试';
+          twResult.innerHTML = '';
+          currentTranslation = result;
+          typeInto(twResult, result, 22, () => {
+            twActions.style.display = 'flex';
+            twDR.enable();
+          });
+        })
+        .catch(() => {
+          twResult.innerHTML = '<span style="color:rgba(255,100,100,0.8)">网络错误，请重试</span>';
+          twDR.enable();
+        });
+    }
+  }
+
+  document.getElementById('twClose').addEventListener('click', () => {
+    translateWindow.classList.remove('show');
+    setTimeout(() => translateWindow.classList.remove('visible'), 200);
+    clearTimeout(twTypingTimer);
+  });
+
+  function handleTwInsert() {
+    if (!savedRange) return;
+    const range = savedRange.cloneRange();
+    range.collapse(false);
+    const span = document.createElement('span');
+    span.className = 'inserted-highlight';
+    span.textContent = currentTranslation;
+    range.insertNode(span);
+    translateWindow.classList.remove('show');
+    setTimeout(() => translateWindow.classList.remove('visible'), 200);
+  }
+
+  function handleTwReplace() {
+    if (!savedRange) return;
+    const range = savedRange.cloneRange();
+    range.deleteContents();
+    const span = document.createElement('span');
+    span.className = 'inserted-highlight';
+    span.textContent = currentTranslation;
+    range.insertNode(span);
+    translateWindow.classList.remove('show');
+    setTimeout(() => translateWindow.classList.remove('visible'), 200);
+  }
+
+  // ── 润色窗口 ──
+  const polishWindow = document.getElementById('polishWindow');
+  const pwUserBubble = document.getElementById('pwUserBubble');
+  const pwResult     = document.getElementById('pwResult');
+  const pwActions    = document.getElementById('pwActions');
+  let currentPolish  = '';
+
+  // 润色映射
+  const POLISH_MAP = [
+    {
+      match: /平板有一个新产品将在三月初上线更新/,
+      result: '我司平板端将于三月初正式上线一款全新产品，届时将同步推送版本更新。'
+    },
+    {
+      match: /收集产品卖点.*导入到天禧/,
+      result: '为确保产品卖点能够及时、准确地导入天禧平台，我们将提前启动卖点收集与整理工作。'
+    },
+    {
+      match: /天禧近期的版本更新计划/,
+      result: '烦请提供天禧近期的版本迭代与上线时间规划，以便我方合理安排内容导入节奏。'
+    },
+    {
+      match: /安排内容导入的时间节点/,
+      result: '我方将依据贵方版本计划，制定相应的内容导入时间节点，确保上线节奏协调一致。'
+    },
+    {
+      match: /内容导入哪个版本/,
+      result: '同时，烦请协助明确我方内容适合导入至哪一版本，以便提前做好适配准备。'
+    },
+    {
+      match: /完整的宣发资料大概2月底会准备好/,
+      result: '完整的宣发物料预计于2月底前整理完毕并提供，请届时查收。'
+    },
+    {
+      match: /Hi\.王宇、金醒/,
+      result: '王宇、金醒，您好，'
+    },
+    {
+      match: /感谢/,
+      result: '感谢您的支持与配合，期待您的回复！'
+    }
+  ];
+
+  function getPolish(text) {
+    for (const entry of POLISH_MAP) {
+      if (entry.match.test(text)) return entry.result;
+    }
+    if (text.length > 30) {
+      return '烦请提供天禧超级智能体近期版本迭代与上线时间计划，我方将据此制定内容导入与上线节奏。同时请协助明确，我方内容适配导入至哪个版本更为稳妥。完整宣发资料预计2月底前提供，感谢配合。';
+    }
+    return text; // 短文本直接返回原文
+  }
+
+  function handlePolish() {
+    const text = selectedText;
+    hideToolbar();
+    if (!text) return;
+    const polished = getPolish(text);
+    showPolishWindow(text, polished);
+  }
+
+  function showPolishWindow(original, polished) {
+    const rLeft = parseInt(toolbar.style.left) || 700;
+    const rTop  = parseInt(toolbar.style.top)  || 400;
+    const pwW = 440;
+    let left = Math.max(8, Math.min(rLeft, 1600 - pwW - 8));
+    polishWindow.style.left   = left + 'px';
+    polishWindow.style.top    = rTop + 'px';
+    polishWindow.style.width  = '440px';
+    polishWindow.style.height = '';
+
+    pwDR.disable();
+    currentPolish = polished;
+    pwUserBubble.textContent = original;
+    pwResult.innerHTML = '';
+    pwActions.style.display = 'none';
+
+    polishWindow.classList.add('visible');
+    requestAnimationFrame(() => requestAnimationFrame(() => polishWindow.classList.add('show')));
+
+    typeInto(pwResult, polished, 28, () => {
+      pwActions.style.display = 'flex';
+      pwDR.enable();
+    });
+  }
+
+  document.getElementById('pwClose').addEventListener('click', () => {
+    polishWindow.classList.remove('show');
+    setTimeout(() => polishWindow.classList.remove('visible'), 200);
+    clearTimeout(pwTypingTimer);
+  });
+
+  function handlePwInsert() {
+    if (!savedRange) return;
+    const range = savedRange.cloneRange();
+    range.collapse(false);
+    const span = document.createElement('span');
+    span.className = 'inserted-highlight';
+    span.textContent = currentPolish;
+    range.insertNode(span);
+    polishWindow.classList.remove('show');
+    setTimeout(() => polishWindow.classList.remove('visible'), 200);
+  }
+
+  function handlePwReplace() {
+    if (!savedRange) return;
+    const range = savedRange.cloneRange();
+    range.deleteContents();
+    const span = document.createElement('span');
+    span.className = 'inserted-highlight';
+    span.textContent = currentPolish;
+    range.insertNode(span);
+    polishWindow.classList.remove('show');
+    setTimeout(() => polishWindow.classList.remove('visible'), 200);
+  }
+  // ── 拖拽 + Resize ──
+  function makeDraggableResizable(win) {
+    const board = document.getElementById('artboard');
+    const header = win.querySelector('.aw-header');
+    const handles = win.querySelectorAll('.resize-handle');
+    let action = null;
+    let dragEnabled = true;   // 拖动始终可用
+    let resizeEnabled = false; // resize 生成完才开
+
+    const maxW = () => 1600 * 0.7;
+    const maxH = () => 1000 * 0.88;
+
+    function getScale() {
+      return board.getBoundingClientRect().width / 1600;
+    }
+
+    function startAction(e, type, dir) {
+      if (type === 'drag' && !dragEnabled) return;
+      if (type === 'resize' && !resizeEnabled) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const scale = getScale();
+      if (type === 'resize' && !win.style.height) {
+        win.style.height = win.offsetHeight + 'px';
+      }
+      action = {
+        type, dir,
+        startX: e.clientX / scale,
+        startY: e.clientY / scale,
+        startL: parseInt(win.style.left) || 0,
+        startT: parseInt(win.style.top)  || 0,
+        startW: win.offsetWidth,
+        startH: win.offsetHeight,
+      };
+      win.classList.add(type === 'drag' ? 'dragging' : 'resizing');
+      win.style.zIndex = 500;
+    }
+
+    header.addEventListener('mousedown', e => {
+      if (e.target.closest('.aw-ctrl, .aw-header-icon')) return;
+      startAction(e, 'drag', null);
+    });
+
+    handles.forEach(h => {
+      const dir = [...h.classList].find(c => c !== 'resize-handle');
+      h.addEventListener('mousedown', e => startAction(e, 'resize', dir));
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!action) return;
+      const scale = getScale();
+      const dx = e.clientX / scale - action.startX;
+      const dy = e.clientY / scale - action.startY;
+      const minW = 440, minH = 320;
+
+      if (action.type === 'drag') {
+        const w = win.offsetWidth;
+        const h = win.offsetHeight;
+        const newL = Math.max(0, Math.min(1600 - w, action.startL + dx));
+        const newT = Math.max(0, Math.min(1000 - h, action.startT + dy));
+        win.style.left = newL + 'px';
+        win.style.top  = newT + 'px';
+      } else {
+        let l = action.startL, t = action.startT, w = action.startW, h = action.startH;
+        const d = action.dir;
+        if (d.includes('e')) w = Math.min(maxW(), Math.max(minW, action.startW + dx));
+        if (d.includes('s')) h = Math.min(maxH(), Math.max(minH, action.startH + dy));
+        if (d.includes('w')) { const nw = Math.min(maxW(), Math.max(minW, action.startW - dx)); l = action.startL + (action.startW - nw); w = nw; }
+        if (d.includes('n')) { const nh = Math.min(maxH(), Math.max(minH, action.startH - dy)); t = action.startT + (action.startH - nh); h = nh; }
+        // 边界限制
+        l = Math.max(0, Math.min(1600 - w, l));
+        t = Math.max(0, Math.min(1000 - h, t));
+        win.style.left   = l + 'px';
+        win.style.top    = t + 'px';
+        win.style.width  = w + 'px';
+        win.style.height = h + 'px';
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!action) return;
+      win.classList.remove('dragging', 'resizing');
+      win.style.zIndex = 400;
+      action = null;
+    });
+
+    handles.forEach(h => { h.style.pointerEvents = 'none'; });
+    header.style.cursor = 'move'; // 拖动始终可用，cursor 始终显示
+
+    return {
+      enable() {
+        resizeEnabled = true;
+        handles.forEach(h => { h.style.pointerEvents = 'auto'; });
+      },
+      disable() {
+        resizeEnabled = false;
+        action = null;
+        handles.forEach(h => { h.style.pointerEvents = 'none'; });
+      }
+    };
+  }
+
+  const awDR = makeDraggableResizable(document.getElementById('answerWindow'));
+  const twDR = makeDraggableResizable(document.getElementById('translateWindow'));
+  const pwDR = makeDraggableResizable(document.getElementById('polishWindow'));
+
 </script>
 </body>
 </html>
