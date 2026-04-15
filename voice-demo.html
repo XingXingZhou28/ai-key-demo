@@ -295,34 +295,45 @@
     .voice-close.show { opacity: 1; pointer-events: auto; }
     .voice-close:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.1); }
 
-    /* ── AI 结果窗口 ── */
+    /* ── 结果窗口 ── */
     .result-window {
       position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%) scale(0.95);
-      width: 560px;
-      background: rgba(0,0,0,0.84);
+      left: 800px;
+      top: 486px;
+      transform: translateX(-50%) scale(0.95);
+      width: 440px;
+      background: rgba(0,0,0,0.8);
       backdrop-filter: blur(60px);
+      -webkit-backdrop-filter: blur(60px);
       border: 1px solid rgba(255,255,255,0.4);
       border-radius: 28px;
       display: none;
       flex-direction: column;
       z-index: 400;
       opacity: 0;
+      overflow: hidden;
+      box-shadow: 0 4px 4px rgba(0,0,0,0.25);
       transition: opacity 0.25s ease, transform 0.25s ease;
     }
     .result-window.visible { display: flex; }
-    .result-window.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    .result-window.show { opacity: 1; transform: translateX(-50%) scale(1); }
 
+    /* 标题栏 */
     .rw-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 24px 20px 0;
       flex-shrink: 0;
-      cursor: move;
     }
+    .rw-nav { display: flex; gap: 8px; align-items: center; }
+    .rw-nav-btn {
+      width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; opacity: 0.6;
+    }
+    .rw-nav-btn:hover { opacity: 1; }
+    .rw-nav-btn img { width: 18px; height: 18px; }
     .rw-title {
       display: flex; align-items: center; gap: 8px;
       color: rgba(255,255,255,0.92);
@@ -331,69 +342,90 @@
       font-weight: 600;
     }
     .rw-title img { width: 24px; height: 24px; }
+    .rw-ctrl-group { display: flex; gap: 8px; align-items: center; }
     .rw-ctrl {
       width: 24px; height: 24px; cursor: pointer; opacity: 0.6;
       display: flex; align-items: center; justify-content: center;
     }
     .rw-ctrl:hover { opacity: 1; }
+    .rw-ctrl img { width: 24px; height: 24px; }
 
+    /* 内容区 */
+    .rw-body {
+      padding: 20px 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    /* 用户气泡 */
     .rw-query {
-      margin: 16px 20px 0;
       align-self: flex-end;
       background: rgba(255,255,255,0.16);
       border-radius: 12px 2px 12px 12px;
       padding: 10px 16px;
       color: rgba(255,255,255,0.92);
-      font-size: 15px;
-      font-family: 'Microsoft YaHei', sans-serif;
-      line-height: 24px;
-    }
-
-    .rw-content {
-      padding: 16px 20px 0;
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow-y: auto;
-      color: rgba(255,255,255,0.92);
-      font-size: 15px;
+      font-size: 16px;
       font-family: 'Microsoft YaHei', sans-serif;
       line-height: 26px;
-      margin-bottom: 16px;
+      white-space: nowrap;
     }
-    .rw-content::-webkit-scrollbar { width: 4px; }
-    .rw-content::-webkit-scrollbar-track { background: transparent; }
-    .rw-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
 
+    /* AI 回答 */
+    .rw-content {
+      color: rgba(255,255,255,0.92);
+      font-size: 16px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      line-height: 26px;
+      min-height: 78px;
+    }
+
+    /* 操作栏 */
     .rw-actions {
       display: flex;
       align-items: center;
-      padding: 12px 20px 16px;
-      gap: 8px;
+      justify-content: space-between;
+      padding-bottom: 20px;
       flex-shrink: 0;
     }
-    .rw-action-btn {
+    .rw-action-group { display: flex; align-items: center; gap: 8px; }
+    .rw-btn {
       display: flex; align-items: center; gap: 3px;
-      padding: 4px 8px;
-      border-radius: 6px;
+      padding: 3px;
+      border-radius: 4px;
       cursor: pointer;
-      color: rgba(255,255,255,0.5);
+      color: rgba(255,255,255,0.48);
       font-size: 12px;
       font-family: 'Microsoft YaHei', sans-serif;
       transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
     }
-    .rw-action-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
+    .rw-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
+    .rw-btn img { width: 18px; height: 18px; }
+    .rw-btn-icon { display: flex; align-items: center; gap: 3px; }
+    .rw-btn-group { display: flex; align-items: center; gap: 4px; }
 
+    /* 输入框 */
     .rw-input-bar {
       margin: 0 20px 20px;
       height: 60px;
       background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.3);
+      border: 1px solid rgba(255,255,255,0.38);
       border-radius: 20px;
       display: flex;
       align-items: center;
       padding: 0 16px;
-      gap: 12px;
+      gap: 8px;
       flex-shrink: 0;
+      backdrop-filter: blur(50px);
+    }
+    .rw-input-cursor {
+      width: 1px; height: 16px;
+      background: rgba(255,255,255,0.48);
+      flex-shrink: 0;
+      animation: blink 0.8s step-end infinite;
     }
     .rw-input {
       flex: 1;
@@ -401,18 +433,53 @@
       border: none;
       outline: none;
       color: rgba(255,255,255,0.8);
-      font-size: 15px;
+      font-size: 16px;
       font-family: 'Microsoft YaHei', sans-serif;
     }
-    .rw-input::placeholder { color: rgba(255,255,255,0.35); }
-    .rw-send {
+    .rw-input::placeholder { color: rgba(255,255,255,0.56); }
+    .rw-input-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .rw-input-btn {
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 10px;
+      transition: background 0.15s;
+    }
+    .rw-input-btn:hover { background: rgba(255,255,255,0.1); }
+    .rw-input-btn img { width: 18px; height: 18px; }
+    .rw-input-divider { width: 1px; height: 12px; background: rgba(255,255,255,0.2); margin: 0 4px; }
+    .rw-send-btn {
       width: 28px; height: 28px;
       background: rgba(255,255,255,0.16);
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
+      transition: background 0.15s;
     }
-    .rw-send:hover { background: rgba(255,255,255,0.28); }
+    .rw-send-btn:hover { background: rgba(255,255,255,0.28); }
+    .rw-send-btn img { width: 18px; height: 18px; }
+
+    /* 微信输入框插入文字 */
+    .wechat-input-text {
+      position: absolute;
+      left: 730px;
+      top: 534px;
+      width: 455px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      color: rgba(255,255,255,0.85);
+      font-size: 12px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 5;
+      pointer-events: none;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .wechat-input-text.show { opacity: 1; }
 
     .typing-cursor {
       display: inline-block;
@@ -476,34 +543,55 @@
   <!-- 取消按钮 -->
   <div class="voice-close" id="voiceClose">取消</div>
 
+  <!-- 微信输入框插入文字 -->
+  <div class="wechat-input-text" id="wechatInputText"></div>
+
   <!-- 结果窗口 -->
   <div class="result-window" id="resultWindow">
+    <!-- 标题栏 -->
     <div class="rw-header">
+      <div class="rw-nav">
+        <div class="rw-nav-btn"><img src="assets/rw-prev.svg" alt=""></div>
+        <div class="rw-nav-btn"><img src="assets/rw-next.svg" alt=""></div>
+      </div>
       <div class="rw-title">
-        <img src="assets/tianxi-icon2.svg" alt="">
+        <img src="assets/rw-tianxi.svg" alt="">
         天禧AI
       </div>
-      <div style="display:flex;gap:8px">
-        <div class="rw-ctrl">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="6" y="11" width="12" height="2" rx="1" fill="rgba(255,255,255,0.6)"/></svg>
-        </div>
-        <div class="rw-ctrl" id="rwClose">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M7 7L17 17M17 7L7 17" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="rw-ctrl-group">
+        <div class="rw-ctrl"><img src="assets/rw-minimize.svg" alt=""></div>
+        <div class="rw-ctrl" id="rwClose"><img src="assets/rw-close.svg" alt=""></div>
+      </div>
+    </div>
+
+    <!-- 内容区 -->
+    <div class="rw-body">
+      <div class="rw-query" id="rwQuery"></div>
+      <div class="rw-content" id="rwContent"></div>
+      <div class="rw-actions" id="rwActions" style="display:none">
+        <div class="rw-action-group">
+          <div class="rw-btn" id="btnInsert"><img src="assets/rw-insert.svg" alt="">插入</div>
+          <div class="rw-btn"><img src="assets/rw-replace.svg" alt="">替换</div>
+          <div class="rw-btn"><img src="assets/rw-read.svg" alt="">朗读</div>
+          <div class="rw-btn"><img src="assets/rw-retry.svg" alt="">重答</div>
+          <div class="rw-btn"><img src="assets/rw-copy.svg" alt="">复制</div>
+          <div class="rw-btn-group">
+            <div class="rw-btn"><img src="assets/rw-like.svg" alt=""></div>
+            <div class="rw-btn"><img src="assets/rw-dislike.svg" alt=""></div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="rw-query" id="rwQuery"></div>
-    <div class="rw-content" id="rwContent"></div>
-    <div class="rw-actions" id="rwActions" style="display:none">
-      <div class="rw-action-btn">📋 复制</div>
-      <div class="rw-action-btn">🔁 重答</div>
-      <div class="rw-action-btn">👍</div>
-      <div class="rw-action-btn">👎</div>
-    </div>
+
+    <!-- 输入框 -->
     <div class="rw-input-bar">
-      <input class="rw-input" type="text" placeholder="继续追问...">
-      <div class="rw-send">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8L14 8M14 8L9 3M14 8L9 13" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="rw-input-cursor"></div>
+      <input class="rw-input" type="text" placeholder="需要我帮你做什么">
+      <div class="rw-input-actions">
+        <div class="rw-input-btn"><img src="assets/rw-add.svg" alt=""></div>
+        <div class="rw-input-btn"><img src="assets/lb-mic.svg" alt=""></div>
+        <div class="rw-input-divider"></div>
+        <div class="rw-send-btn"><img src="assets/rw-send.svg" alt=""></div>
       </div>
     </div>
   </div>
@@ -536,9 +624,10 @@
   const rwQuery      = document.getElementById('rwQuery');
   const rwContent    = document.getElementById('rwContent');
   const rwActions    = document.getElementById('rwActions');
+  const wechatInputText = document.getElementById('wechatInputText');
 
   const VOICE_INPUT = '帮我写一份产品规划汇报材料';
-  const AI_ANSWER = `好的，以下是一份产品规划汇报材料框架，供你参考：\n\n**产品规划汇报材料**\n\n**一、现状分析**\n当前产品已完成核心功能搭建，用户规模稳步增长，但在用户留存和变现路径上仍有较大提升空间。\n\n**二、核心目标（本季度）**\n• 用户活跃度提升 20%\n• 新功能上线 3 项\n• NPS 分数达到 45+\n\n**三、重点规划方向**\n1. AI 能力深度整合，提升核心场景效率\n2. 个性化推荐优化，增强用户粘性\n3. 商业化路径探索，打通付费转化链路\n\n**四、里程碑节点**\n• 第一阶段（1-2周）：需求评审 & 设计完成\n• 第二阶段（3-4周）：开发联调 & 内测\n• 第三阶段（5-6周）：灰度发布 & 数据验证\n\n**五、风险与应对**\n主要风险为研发资源紧张，建议提前锁定关键人力，并设置 buffer 时间。`;
+  const AI_ANSWER = `非常抱歉宇哥，我目前手头的工作任务已经处于饱和状态，实在无法再承接新的安排。担心精力分散影响整体工作质量与进度，还请您理解并帮忙协调，非常感谢！`;
 
   const msgAvatar = document.getElementById('msgAvatar');
 
@@ -614,24 +703,8 @@
 
     function next() {
       if (i < text.length) {
-        const ch = text[i++];
-        if (ch === '\n') {
-          cursor.before(document.createElement('br'));
-        } else if (ch === '*' && text[i] === '*') {
-          // bold marker — skip rendering asterisks, just skip
-          i++;
-          // find closing **
-          let bold = '';
-          while (i < text.length && !(text[i] === '*' && text[i+1] === '*')) bold += text[i++];
-          i += 2;
-          const b = document.createElement('strong');
-          b.textContent = bold;
-          b.style.color = 'rgba(255,255,255,0.95)';
-          cursor.before(b);
-        } else {
-          cursor.before(document.createTextNode(ch));
-        }
-        setTimeout(next, 18);
+        cursor.before(document.createTextNode(text[i++]));
+        setTimeout(next, 22);
       } else {
         cursor.remove();
         rwActions.style.display = 'flex';
@@ -643,6 +716,16 @@
   document.getElementById('rwClose').addEventListener('click', () => {
     resultWindow.classList.remove('show');
     setTimeout(() => resultWindow.classList.remove('visible'), 250);
+  });
+
+  // 插入到微信
+  document.getElementById('btnInsert').addEventListener('click', () => {
+    resultWindow.classList.remove('show');
+    setTimeout(() => {
+      resultWindow.classList.remove('visible');
+      wechatInputText.textContent = AI_ANSWER;
+      wechatInputText.classList.add('show');
+    }, 250);
   });
 
   voiceClose.addEventListener('click', () => {
