@@ -117,9 +117,7 @@
       bottom: 80px;
       transform: translateX(-50%);
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 12px;
       opacity: 0;
       transition: opacity 0.4s ease;
     }
@@ -147,11 +145,6 @@
       padding: 2px 8px;
       font-size: 13px;
       font-family: inherit;
-    }
-    .key-hint-text {
-      color: rgba(255,255,255,0.5);
-      font-size: 12px;
-      font-family: 'Microsoft YaHei', sans-serif;
     }
 
     /* ── 语音唤起 UI ── */
@@ -256,26 +249,6 @@
       white-space: nowrap;
       min-width: 0;
     }
-
-    /* 关闭按钮 */
-    .voice-close {
-      position: absolute;
-      bottom: 118px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: rgba(255,255,255,0.4);
-      font-size: 12px;
-      font-family: 'Microsoft YaHei', sans-serif;
-      cursor: pointer;
-      padding: 4px 12px;
-      border-radius: 12px;
-      z-index: 3;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease, color 0.15s, background 0.15s;
-    }
-    .voice-close.show { opacity: 1; pointer-events: auto; }
-    .voice-close:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.1); }
 
     /* ── 结果窗口 ── */
     .result-window {
@@ -449,7 +422,7 @@
     .wechat-input-text {
       position: absolute;
       left: 455px;
-      top: 800px;
+      top: 820px;
       width: 640px;
       height: 40px;
       display: flex;
@@ -501,10 +474,8 @@
   <!-- Alt+Space 提示 -->
   <div class="ai-key-hint" id="aiKeyHint">
     <div class="key-cap" id="keyCapBtn">
-      <kbd>Alt</kbd>＋<kbd>Space</kbd>
-      <span>唤起 AI 语音</span>
+      长按 <kbd>Alt</kbd>＋<kbd>Space</kbd> 唤起 AI 语音
     </div>
-    <div class="key-hint-text">长按可进入语音模式</div>
   </div>
 
   <!-- 底部渐变遮罩 -->
@@ -520,9 +491,6 @@
     </div>
     <div class="lb-text" id="lbText"></div>
   </div>
-
-  <!-- 取消按钮 -->
-  <div class="voice-close" id="voiceClose">取消</div>
 
   <!-- 微信输入框插入文字 -->
   <div class="wechat-input-text" id="wechatInputText"></div>
@@ -614,7 +582,6 @@
   const voiceBgMask  = document.getElementById('voiceBgMask');
   const liquidBar    = document.getElementById('liquidBar');
   const lbText       = document.getElementById('lbText');
-  const voiceClose   = document.getElementById('voiceClose');
   const resultWindow = document.getElementById('resultWindow');
   const rwQuery      = document.getElementById('rwQuery');
   const rwContent    = document.getElementById('rwContent');
@@ -647,10 +614,7 @@
     aiKeyHint.classList.remove('show');
     setTimeout(() => {
       voiceBgMask.classList.add('show');
-      voiceClose.classList.add('show');
-      // 胶囊弹出
       liquidBar.classList.add('show');
-      // 等入场动画完成后开始打字
       setTimeout(typeVoice, 600);
     }, 300);
   }
@@ -677,7 +641,6 @@
   function showResult() {
     voiceBgMask.classList.remove('show');
     liquidBar.classList.remove('show');
-    voiceClose.classList.remove('show');
     rwQuery.textContent = VOICE_INPUT;
     rwContent.innerHTML = '';
     rwActions.style.display = 'none';
@@ -723,14 +686,6 @@
     }, 250);
   });
 
-  voiceClose.addEventListener('click', () => {
-    clearTimeout(voiceTimer);
-    lbText.innerHTML = '';
-    voiceBgMask.classList.remove('show');
-    liquidBar.classList.remove('show');
-    voiceClose.classList.remove('show');
-    setTimeout(() => aiKeyHint.classList.add('show'), 300);
-  });
 </script>
 </body>
 </html>
