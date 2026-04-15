@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>语音 AI 交互</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .artboard {
+      position: absolute;
+      width: 1600px;
+      height: 1000px;
+      top: 50%;
+      left: 50%;
+      transform-origin: center center;
+      overflow: hidden;
+    }
+
+    .artboard > .bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* 微信窗口 */
+    .wechat-window {
+      position: absolute;
+      left: 403px;
+      top: 92px;
+      width: 794px;
+      height: 778px;
+    }
+
+    /* 消息气泡（从屏幕外滑入） */
+    .msg-bubble-wrap {
+      position: absolute;
+      left: 771px;
+      top: 508px;
+      display: flex;
+      align-items: flex-start;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .msg-bubble-wrap.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* 左侧小箭头 */
+    .bubble-arrow {
+      width: 6px;
+      height: 22px;
+      flex-shrink: 0;
+      margin-top: 4px;
+      position: relative;
+    }
+    .bubble-arrow::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 6px solid transparent;
+      border-right-color: #333;
+    }
+
+    .bubble-body {
+      background: #333;
+      border-radius: 4px;
+      padding: 12px;
+      width: 300px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.16);
+    }
+    .bubble-body p {
+      font-size: 12px;
+      line-height: 16px;
+      color: #fff;
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      word-break: break-all;
+    }
+
+    /* 头像 */
+    .msg-avatar {
+      position: absolute;
+      left: 737px;
+      top: 514px;
+      width: 34px;
+      height: 34px;
+      border-radius: 4px;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .msg-avatar.show { opacity: 1; transform: translateY(0); }
+    .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* 底部黑条（遮住微信输入框） */
+    .wechat-bar {
+      position: absolute;
+      left: 730px;
+      top: 502px;
+      width: 455px;
+      height: 119px;
+      background: #191919;
+    }
+
+    /* ── AI键 提示 ── */
+    .ai-key-hint {
+      position: absolute;
+      left: 50%;
+      bottom: 80px;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .ai-key-hint.show { opacity: 1; }
+
+    .key-cap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 10px;
+      padding: 10px 20px;
+      color: rgba(255,255,255,0.9);
+      font-size: 14px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .key-cap:hover { background: rgba(255,255,255,0.2); }
+    .key-cap kbd {
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .key-hint-text {
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
+      font-family: 'Microsoft YaHei', sans-serif;
+    }
+
+    /* ── 语音唤起 UI ── */
+    .voice-ui {
+      position: absolute;
+      left: 50%;
+      bottom: 60px;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .voice-ui.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* 语音识别文字 */
+    .voice-text {
+      color: rgba(255,255,255,0.9);
+      font-size: 18px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      text-align: center;
+      min-height: 28px;
+      position: relative;
+      z-index: 2;
+    }
+    .voice-text .cursor {
+      display: inline-block;
+      width: 2px; height: 18px;
+      background: rgba(255,255,255,0.7);
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 0.8s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* 底部渐变遮罩 */
+    .voice-bg-mask {
+      position: absolute;
+      bottom: 59px;
+      left: 0;
+      width: 1600px;
+      height: 319px;
+      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 40%, transparent 100%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      z-index: 1;
+    }
+    .voice-bg-mask.show { opacity: 1; }
+
+    /* 语音球容器 */
+    .voice-ball-wrap {
+      position: absolute;
+      bottom: 95px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .voice-ball-wrap.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* 涟漪圆环 — 入场时从中心扩散 */
+    .vb-ring {
+      position: absolute;
+      border-radius: 50%;
+      transform: scale(0);
+    }
+    .voice-ball-wrap.show .vb-ring {
+      animation: rippleIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    /* 持续呼吸动效（入场后接续） */
+    .voice-ball-wrap.show .vb-ring.breathe {
+      animation: rippleIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+                 breathe 2.4s ease-in-out 0.6s infinite;
+    }
+    @keyframes rippleIn {
+      0%   { transform: scale(0); opacity: 0; }
+      60%  { opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes breathe {
+      0%, 100% { transform: scale(1);    opacity: 1; }
+      50%       { transform: scale(1.06); opacity: 0.85; }
+    }
+
+    /* 最外层涟漪（扩散后消失，循环） */
+    .vb-ripple {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .voice-ball-wrap.show .vb-ripple {
+      animation: ripplePulse 2.4s ease-out infinite;
+    }
+    .voice-ball-wrap.show .vb-ripple:nth-child(2) { animation-delay: 0.8s; }
+    .voice-ball-wrap.show .vb-ripple:nth-child(3) { animation-delay: 1.6s; }
+    @keyframes ripplePulse {
+      0%   { transform: scale(0.5); opacity: 0.5; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+
+    /* 各层尺寸 */
+    .vb-r1 { width: 178px; height: 178px; background: radial-gradient(circle, rgba(51,94,255,0.08) 0%, transparent 70%); animation-delay: 0s !important; }
+    .vb-r2 { width: 137px; height: 137px; background: radial-gradient(circle, rgba(51,94,255,0.15) 0%, transparent 70%); animation-delay: 0.08s !important; }
+    .vb-r3 { width: 105px; height: 105px; background: radial-gradient(circle, rgba(51,94,255,0.25) 0%, transparent 70%); animation-delay: 0.14s !important; }
+    .vb-r4 { width: 87px;  height: 87px;  background: radial-gradient(circle, rgba(51,94,255,0.4) 0%, transparent 70%);  animation-delay: 0.18s !important; }
+
+    /* 主球体 */
+    .vb-core {
+      position: absolute;
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 38% 36%, #6b8fff 0%, #335eff 50%, #1a3acc 100%);
+      box-shadow: 0 0 24px rgba(51,94,255,0.6), 0 0 48px rgba(51,94,255,0.3);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transform: scale(0);
+      animation-delay: 0.22s !important;
+    }
+    .voice-ball-wrap.show .vb-core {
+      animation: rippleIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.22s forwards,
+                 breathe 2.4s ease-in-out 0.72s infinite;
+    }
+    .vb-core img { width: 24px; height: 24px; }
+
+    /* 涟漪扩散圆（3层，错开时间） */
+    .vb-ripple { width: 64px; height: 64px; border: 1.5px solid rgba(51,94,255,0.5); }
+
+    /* 关闭按钮 */
+    .voice-close {
+      position: absolute;
+      bottom: 62px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.4);
+      font-size: 12px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      cursor: pointer;
+      padding: 4px 12px;
+      border-radius: 12px;
+      transition: color 0.15s, background 0.15s;
+      z-index: 3;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, color 0.15s, background 0.15s;
+    }
+    .voice-close.show { opacity: 1; pointer-events: auto; }
+    .voice-close:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.1); }
+
+    /* 识别文字浮在球上方 */
+    .voice-text-wrap {
+      position: absolute;
+      bottom: 310px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      white-space: nowrap;
+    }
+    .voice-text-wrap.show { opacity: 1; }
+
+    /* ── AI 结果窗口 ── */
+    .result-window {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      width: 560px;
+      background: rgba(0,0,0,0.84);
+      backdrop-filter: blur(60px);
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 28px;
+      display: none;
+      flex-direction: column;
+      z-index: 400;
+      opacity: 0;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .result-window.visible { display: flex; }
+    .result-window.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+    .rw-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 20px 0;
+      flex-shrink: 0;
+      cursor: move;
+    }
+    .rw-title {
+      display: flex; align-items: center; gap: 8px;
+      color: rgba(255,255,255,0.92);
+      font-size: 16px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      font-weight: 600;
+    }
+    .rw-title img { width: 24px; height: 24px; }
+    .rw-ctrl {
+      width: 24px; height: 24px; cursor: pointer; opacity: 0.6;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rw-ctrl:hover { opacity: 1; }
+
+    .rw-query {
+      margin: 16px 20px 0;
+      align-self: flex-end;
+      background: rgba(255,255,255,0.16);
+      border-radius: 12px 2px 12px 12px;
+      padding: 10px 16px;
+      color: rgba(255,255,255,0.92);
+      font-size: 15px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      line-height: 24px;
+    }
+
+    .rw-content {
+      padding: 16px 20px 0;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      color: rgba(255,255,255,0.92);
+      font-size: 15px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      line-height: 26px;
+      margin-bottom: 16px;
+    }
+    .rw-content::-webkit-scrollbar { width: 4px; }
+    .rw-content::-webkit-scrollbar-track { background: transparent; }
+    .rw-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+    .rw-actions {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px 16px;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .rw-action-btn {
+      display: flex; align-items: center; gap: 3px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      transition: background 0.15s, color 0.15s;
+    }
+    .rw-action-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
+
+    .rw-input-bar {
+      margin: 0 20px 20px;
+      height: 60px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .rw-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: rgba(255,255,255,0.8);
+      font-size: 15px;
+      font-family: 'Microsoft YaHei', sans-serif;
+    }
+    .rw-input::placeholder { color: rgba(255,255,255,0.35); }
+    .rw-send {
+      width: 28px; height: 28px;
+      background: rgba(255,255,255,0.16);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .rw-send:hover { background: rgba(255,255,255,0.28); }
+
+    .typing-cursor {
+      display: inline-block;
+      width: 2px; height: 16px;
+      background: rgba(255,255,255,0.7);
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 0.8s step-end infinite;
+    }
+  </style>
+</head>
+<body>
+
+<div class="artboard" id="artboard">
+  <img class="bg" src="assets/wechat-desktop.png" alt="">
+
+  <!-- 微信窗口 -->
+  <img class="wechat-window" src="assets/wechat-window.png" alt="">
+
+  <!-- 底部黑条 -->
+  <div class="wechat-bar"></div>
+
+  <!-- 头像 -->
+  <div class="msg-avatar" id="msgAvatar"><img src="assets/avatar.png" alt=""></div>
+
+  <!-- 消息气泡 -->
+  <div class="msg-bubble-wrap" id="msgBubble">
+    <div class="bubble-arrow"></div>
+    <div class="bubble-body">
+      <p>鑫鑫，有个紧急任务，我后天要提交一份产品规划汇报材料，你立刻负责加急完成，今天务必出一版定稿。</p>
+    </div>
+  </div>
+
+  <!-- Alt+Space 提示 -->
+  <div class="ai-key-hint" id="aiKeyHint">
+    <div class="key-cap" id="keyCapBtn">
+      <kbd>Alt</kbd>＋<kbd>Space</kbd>
+      <span>唤起 AI 语音</span>
+    </div>
+    <div class="key-hint-text">长按可进入语音模式</div>
+  </div>
+
+  <!-- 语音 UI -->
+  <!-- 底部渐变遮罩 -->
+  <div class="voice-bg-mask" id="voiceBgMask"></div>
+
+  <!-- 识别文字 -->
+  <div class="voice-text-wrap" id="voiceTextWrap">
+    <div class="voice-text" id="voiceText"></div>
+  </div>
+
+  <!-- 语音球 -->
+  <div class="voice-ball-wrap" id="voiceBallWrap">
+    <!-- 涟漪扩散圆（3层） -->
+    <div class="vb-ripple"></div>
+    <div class="vb-ripple"></div>
+    <div class="vb-ripple"></div>
+    <!-- 光晕圆环（从外到内） -->
+    <div class="vb-ring breathe vb-r1"></div>
+    <div class="vb-ring breathe vb-r2"></div>
+    <div class="vb-ring breathe vb-r3"></div>
+    <div class="vb-ring breathe vb-r4"></div>
+    <!-- 主球体 -->
+    <div class="vb-core" id="voiceCore">
+      <img src="assets/voice-mic-icon.svg" alt="">
+    </div>
+  </div>
+
+  <!-- 取消按钮 -->
+  <div class="voice-close" id="voiceClose">取消</div>
+
+  <!-- 结果窗口 -->
+  <div class="result-window" id="resultWindow">
+    <div class="rw-header">
+      <div class="rw-title">
+        <img src="assets/tianxi-icon2.svg" alt="">
+        天禧AI
+      </div>
+      <div style="display:flex;gap:8px">
+        <div class="rw-ctrl">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="6" y="11" width="12" height="2" rx="1" fill="rgba(255,255,255,0.6)"/></svg>
+        </div>
+        <div class="rw-ctrl" id="rwClose">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M7 7L17 17M17 7L7 17" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="rw-query" id="rwQuery"></div>
+    <div class="rw-content" id="rwContent"></div>
+    <div class="rw-actions" id="rwActions" style="display:none">
+      <div class="rw-action-btn">📋 复制</div>
+      <div class="rw-action-btn">🔁 重答</div>
+      <div class="rw-action-btn">👍</div>
+      <div class="rw-action-btn">👎</div>
+    </div>
+    <div class="rw-input-bar">
+      <input class="rw-input" type="text" placeholder="继续追问...">
+      <div class="rw-send">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8L14 8M14 8L9 3M14 8L9 13" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── 缩放适配 ──
+  function scaleArtboard() {
+    const board = document.getElementById('artboard');
+    const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 1000);
+    board.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  }
+  scaleArtboard();
+  window.addEventListener('resize', scaleArtboard);
+
+  // ── 流程状态 ──
+  // step 0: 页面加载，消息滑入
+  // step 1: 显示 Alt+Space 提示
+  // step 2: 点击后进入语音模式，识别文字打出
+  // step 3: 识别完毕，弹出结果窗口
+
+  const msgBubble    = document.getElementById('msgBubble');
+  const aiKeyHint    = document.getElementById('aiKeyHint');
+  const voiceBgMask  = document.getElementById('voiceBgMask');
+  const voiceBallWrap= document.getElementById('voiceBallWrap');
+  const voiceTextWrap= document.getElementById('voiceTextWrap');
+  const voiceText    = document.getElementById('voiceText');
+  const voiceClose   = document.getElementById('voiceClose');
+  const resultWindow = document.getElementById('resultWindow');
+  const rwQuery      = document.getElementById('rwQuery');
+  const rwContent    = document.getElementById('rwContent');
+  const rwActions    = document.getElementById('rwActions');
+
+  const VOICE_INPUT = '帮我写一份产品规划汇报材料';
+  const AI_ANSWER = `好的，以下是一份产品规划汇报材料框架，供你参考：\n\n**产品规划汇报材料**\n\n**一、现状分析**\n当前产品已完成核心功能搭建，用户规模稳步增长，但在用户留存和变现路径上仍有较大提升空间。\n\n**二、核心目标（本季度）**\n• 用户活跃度提升 20%\n• 新功能上线 3 项\n• NPS 分数达到 45+\n\n**三、重点规划方向**\n1. AI 能力深度整合，提升核心场景效率\n2. 个性化推荐优化，增强用户粘性\n3. 商业化路径探索，打通付费转化链路\n\n**四、里程碑节点**\n• 第一阶段（1-2周）：需求评审 & 设计完成\n• 第二阶段（3-4周）：开发联调 & 内测\n• 第三阶段（5-6周）：灰度发布 & 数据验证\n\n**五、风险与应对**\n主要风险为研发资源紧张，建议提前锁定关键人力，并设置 buffer 时间。`;
+
+  const msgAvatar = document.getElementById('msgAvatar');
+
+  // step 0 → 头像 + 消息同时滑入
+  setTimeout(() => {
+    msgAvatar.classList.add('show');
+    msgBubble.classList.add('show');
+  }, 600);
+
+  // step 1 → 显示 Alt+Space 提示
+  setTimeout(() => {
+    aiKeyHint.classList.add('show');
+  }, 1400);
+
+  // step 2 → 点击唤起语音
+  document.getElementById('keyCapBtn').addEventListener('click', startVoice);
+  document.addEventListener('keydown', e => {
+    if (e.altKey && e.code === 'Space') { e.preventDefault(); startVoice(); }
+  });
+
+  function startVoice() {
+    aiKeyHint.classList.remove('show');
+    setTimeout(() => {
+      // 遮罩 + 语音球 + 取消按钮同时出现
+      voiceBgMask.classList.add('show');
+      voiceBallWrap.classList.add('show');
+      voiceClose.classList.add('show');
+      // 稍后开始识别文字
+      setTimeout(() => {
+        voiceTextWrap.classList.add('show');
+        typeVoice();
+      }, 800);
+    }, 300);
+  }
+
+  let voiceTimer = null;
+  function typeVoice() {
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    voiceText.appendChild(cursor);
+
+    function next() {
+      if (i < VOICE_INPUT.length) {
+        cursor.before(document.createTextNode(VOICE_INPUT[i++]));
+        voiceTimer = setTimeout(next, 80);
+      } else {
+        cursor.remove();
+        // 识别完毕，稍等后弹出结果
+        setTimeout(showResult, 800);
+      }
+    }
+    next();
+  }
+
+  function showResult() {
+    voiceBgMask.classList.remove('show');
+    voiceBallWrap.classList.remove('show');
+    voiceTextWrap.classList.remove('show');
+    voiceClose.classList.remove('show');
+    rwQuery.textContent = VOICE_INPUT;
+    rwContent.innerHTML = '';
+    rwActions.style.display = 'none';
+
+    resultWindow.classList.add('visible');
+    requestAnimationFrame(() => requestAnimationFrame(() => resultWindow.classList.add('show')));
+
+    // 打字动画
+    setTimeout(() => typeAnswer(), 300);
+  }
+
+  function typeAnswer() {
+    const text = AI_ANSWER;
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'typing-cursor';
+    rwContent.appendChild(cursor);
+
+    function next() {
+      if (i < text.length) {
+        const ch = text[i++];
+        if (ch === '\n') {
+          cursor.before(document.createElement('br'));
+        } else if (ch === '*' && text[i] === '*') {
+          // bold marker — skip rendering asterisks, just skip
+          i++;
+          // find closing **
+          let bold = '';
+          while (i < text.length && !(text[i] === '*' && text[i+1] === '*')) bold += text[i++];
+          i += 2;
+          const b = document.createElement('strong');
+          b.textContent = bold;
+          b.style.color = 'rgba(255,255,255,0.95)';
+          cursor.before(b);
+        } else {
+          cursor.before(document.createTextNode(ch));
+        }
+        setTimeout(next, 18);
+      } else {
+        cursor.remove();
+        rwActions.style.display = 'flex';
+      }
+    }
+    next();
+  }
+
+  document.getElementById('rwClose').addEventListener('click', () => {
+    resultWindow.classList.remove('show');
+    setTimeout(() => resultWindow.classList.remove('visible'), 250);
+  });
+
+  voiceClose.addEventListener('click', () => {
+    clearTimeout(voiceTimer);
+    voiceText.innerHTML = '';
+    voiceBgMask.classList.remove('show');
+    voiceBallWrap.classList.remove('show');
+    voiceTextWrap.classList.remove('show');
+    voiceClose.classList.remove('show');
+    setTimeout(() => aiKeyHint.classList.add('show'), 300);
+  });
+</script>
+</body>
+</html>
