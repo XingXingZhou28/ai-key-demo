@@ -160,32 +160,15 @@
     }
 
     /* ── 语音唤起 UI ── */
-    .voice-ui {
-      position: absolute;
-      left: 50%;
-      bottom: 60px;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-    .voice-ui.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
 
     /* 底部渐变遮罩 */
     .voice-bg-mask {
       position: absolute;
-      bottom: 59px;
+      bottom: 0;
       left: 0;
       width: 1600px;
-      height: 319px;
-      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 40%, transparent 100%);
+      height: 360px;
+      background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.55) 50%, transparent 100%);
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.5s ease;
@@ -193,127 +176,19 @@
     }
     .voice-bg-mask.show { opacity: 1; }
 
-    /* 语音球容器 */
-    .voice-ball-wrap {
-      position: absolute;
-      bottom: 95px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 200px;
-      height: 200px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 2;
-    }
-    .voice-ball-wrap.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    /* 涟漪圆环 — 入场时从中心扩散 */
-    .vb-ring {
-      position: absolute;
-      border-radius: 50%;
-      transform: scale(0);
-    }
-    .voice-ball-wrap.show .vb-ring {
-      animation: rippleIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
-    /* 持续呼吸动效（入场后接续） */
-    .voice-ball-wrap.show .vb-ring.breathe {
-      animation: rippleIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-                 breathe 2.4s ease-in-out 0.6s infinite;
-    }
-    @keyframes rippleIn {
-      0%   { transform: scale(0); opacity: 0; }
-      60%  { opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    @keyframes breathe {
-      0%, 100% { transform: scale(1);    opacity: 1; }
-      50%       { transform: scale(1.06); opacity: 0.85; }
-    }
-
-    /* 最外层涟漪（扩散后消失，循环） */
-    .vb-ripple {
-      position: absolute;
-      border-radius: 50%;
-      opacity: 0;
-      pointer-events: none;
-    }
-    .voice-ball-wrap.show .vb-ripple {
-      animation: ripplePulse 2.4s ease-out infinite;
-    }
-    .voice-ball-wrap.show .vb-ripple:nth-child(2) { animation-delay: 0.8s; }
-    .voice-ball-wrap.show .vb-ripple:nth-child(3) { animation-delay: 1.6s; }
-    @keyframes ripplePulse {
-      0%   { transform: scale(0.5); opacity: 0.5; }
-      100% { transform: scale(1.8); opacity: 0; }
-    }
-
-    /* 各层尺寸 */
-    .vb-r1 { width: 178px; height: 178px; background: radial-gradient(circle, rgba(51,94,255,0.08) 0%, transparent 70%); animation-delay: 0s !important; }
-    .vb-r2 { width: 137px; height: 137px; background: radial-gradient(circle, rgba(51,94,255,0.15) 0%, transparent 70%); animation-delay: 0.08s !important; }
-    .vb-r3 { width: 105px; height: 105px; background: radial-gradient(circle, rgba(51,94,255,0.25) 0%, transparent 70%); animation-delay: 0.14s !important; }
-    .vb-r4 { width: 87px;  height: 87px;  background: radial-gradient(circle, rgba(51,94,255,0.4) 0%, transparent 70%);  animation-delay: 0.18s !important; }
-
-    /* 主球体 */
-    .vb-core {
-      position: absolute;
-      width: 64px; height: 64px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 38% 36%, #6b8fff 0%, #335eff 50%, #1a3acc 100%);
-      box-shadow: 0 0 24px rgba(51,94,255,0.6), 0 0 48px rgba(51,94,255,0.3);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      transform: scale(0);
-      animation-delay: 0.22s !important;
-    }
-    .voice-ball-wrap.show .vb-core {
-      animation: rippleIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.22s forwards,
-                 breathe 2.4s ease-in-out 0.72s infinite;
-    }
-    .vb-core img { width: 24px; height: 24px; }
-
-    /* 涟漪扩散圆（3层，错开时间） */
-    .vb-ripple { width: 64px; height: 64px; border: 1.5px solid rgba(51,94,255,0.5); }
-
-    /* 关闭按钮 */
-    .voice-close {
-      position: absolute;
-      bottom: 62px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: rgba(255,255,255,0.4);
-      font-size: 12px;
-      font-family: 'Microsoft YaHei', sans-serif;
-      cursor: pointer;
-      padding: 4px 12px;
-      border-radius: 12px;
-      transition: color 0.15s, background 0.15s;
-      z-index: 3;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease, color 0.15s, background 0.15s;
-    }
-    .voice-close.show { opacity: 1; pointer-events: auto; }
-    .voice-close:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.1); }
-
-    /* 识别输入条（液态胶囊） */
+    /* 液态输入条（球 + 文字一体） */
     .liquid-bar {
       position: absolute;
-      bottom: 28px;
+      bottom: 40px;
       left: 50%;
-      transform: translateX(-50%);
+      transform: translateX(-50%) scale(0.4);
       height: 68px;
-      width: 68px;
+      width: fit-content;
+      min-width: 68px;
       background: rgba(0,0,0,0.6);
       backdrop-filter: blur(25px);
       -webkit-backdrop-filter: blur(25px);
-      border: 1px solid rgba(255,255,255,0.9);
+      border: 1px solid rgba(255,255,255,0.85);
       border-radius: 100px;
       display: flex;
       align-items: center;
@@ -327,44 +202,98 @@
       box-shadow:
         inset 6px 6px 1px -7px rgba(255,255,255,0.75),
         inset -6px -6px 1px -7px rgba(255,255,255,0.8),
-        inset 2px 2px 2px -1px rgba(255,255,255,0.75),
-        inset -2px -2px 2px -1px rgba(255,255,255,0.75),
-        inset 0 0 2px 2px rgba(153,153,153,0.15),
-        inset 0 0 35px 0 rgba(242,242,242,0.15);
-      transition: opacity 0.3s ease;
+        inset 2px 2px 2px -1px rgba(255,255,255,0.6),
+        inset -2px -2px 2px -1px rgba(255,255,255,0.6),
+        inset 0 0 35px 0 rgba(242,242,242,0.08),
+        0 4px 24px rgba(0,0,0,0.3);
+      transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
     }
     .liquid-bar.show {
       opacity: 1;
       pointer-events: auto;
-      animation: liquidGrow 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      transform: translateX(-50%) scale(1);
     }
-    @keyframes liquidGrow {
-      0%   { width: 68px; }
-      100% { width: 304px; }
-    }
-    .lb-icon {
+
+    /* 语音球（mic图标 + 光晕） */
+    .lb-ball {
+      position: relative;
       width: 32px;
       height: 32px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 38% 36%, #6b8fff 0%, #335eff 50%, #1a3acc 100%);
-      box-shadow: 0 0 16px rgba(51,94,255,0.7), 0 0 32px rgba(51,94,255,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       flex-shrink: 0;
     }
-    .lb-icon img { width: 16px; height: 16px; }
+    /* 光晕层 */
+    .lb-glow {
+      position: absolute;
+      top: 50%; left: 50%;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .lb-glow1 {
+      width: 89px; height: 89px;
+      transform: translate(-50%, -50%);
+      opacity: 0.3;
+      animation: glowPulse 2.4s ease-in-out infinite;
+    }
+    .lb-glow2 {
+      width: 68px; height: 68px;
+      transform: translate(-50%, -50%);
+      animation: glowPulse 2.4s ease-in-out 0.4s infinite;
+    }
+    .lb-glow3 {
+      width: 52px; height: 52px;
+      transform: translate(-50%, -50%);
+      animation: glowPulse 2.4s ease-in-out 0.8s infinite;
+    }
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.35; transform: translate(-50%, -50%) scale(1); }
+      50%       { opacity: 0.65; transform: translate(-50%, -50%) scale(1.12); }
+    }
+    /* SVG 环 */
+    .lb-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .lb-ring1 { width: 43px; height: 43px; }
+    .lb-ring2, .lb-ring3 { width: 48px; height: 48px; }
+    /* mic 图标 */
+    .lb-mic {
+      position: absolute;
+      width: 15px; height: 19px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+    }
+
+    /* 识别文字 */
     .lb-text {
       color: rgba(255,255,255,0.92);
       font-size: 16px;
       font-family: 'Microsoft YaHei', sans-serif;
       line-height: 26px;
-      flex: 1;
+      white-space: nowrap;
       min-width: 0;
-      opacity: 0;
-      transition: opacity 0.2s ease;
     }
-    .liquid-bar.typing .lb-text { opacity: 1; }
+
+    /* 关闭按钮 */
+    .voice-close {
+      position: absolute;
+      bottom: 118px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.4);
+      font-size: 12px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      cursor: pointer;
+      padding: 4px 12px;
+      border-radius: 12px;
+      z-index: 3;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, color 0.15s, background 0.15s;
+    }
+    .voice-close.show { opacity: 1; pointer-events: auto; }
+    .voice-close:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.1); }
 
     /* ── AI 结果窗口 ── */
     .result-window {
@@ -527,31 +456,21 @@
     <div class="key-hint-text">长按可进入语音模式</div>
   </div>
 
-  <!-- 语音 UI -->
   <!-- 底部渐变遮罩 -->
   <div class="voice-bg-mask" id="voiceBgMask"></div>
 
-  <!-- 识别输入条 -->
+  <!-- 液态输入条（球 + 文字一体） -->
   <div class="liquid-bar" id="liquidBar">
-    <div class="lb-icon"><img src="assets/voice-mic-icon.svg" alt=""></div>
-    <div class="lb-text" id="lbText"></div>
-  </div>
-
-  <!-- 语音球 -->
-  <div class="voice-ball-wrap" id="voiceBallWrap">
-    <!-- 涟漪扩散圆（3层） -->
-    <div class="vb-ripple"></div>
-    <div class="vb-ripple"></div>
-    <div class="vb-ripple"></div>
-    <!-- 光晕圆环（从外到内） -->
-    <div class="vb-ring breathe vb-r1"></div>
-    <div class="vb-ring breathe vb-r2"></div>
-    <div class="vb-ring breathe vb-r3"></div>
-    <div class="vb-ring breathe vb-r4"></div>
-    <!-- 主球体 -->
-    <div class="vb-core" id="voiceCore">
-      <img src="assets/voice-mic-icon.svg" alt="">
+    <div class="lb-ball">
+      <img class="lb-glow lb-glow1" src="assets/lb-glow1.png" alt="">
+      <img class="lb-glow lb-glow2" src="assets/lb-glow2.png" alt="">
+      <img class="lb-glow lb-glow3" src="assets/lb-glow3.png" alt="">
+      <img class="lb-ring lb-ring1" src="assets/lb-ring1.svg" alt="">
+      <img class="lb-ring lb-ring2" src="assets/lb-ring2.svg" alt="">
+      <img class="lb-ring lb-ring3" src="assets/lb-ring3.svg" alt="">
+      <img class="lb-mic" src="assets/lb-mic.svg" alt="">
     </div>
+    <div class="lb-text" id="lbText"></div>
   </div>
 
   <!-- 取消按钮 -->
@@ -610,7 +529,6 @@
   const msgBubble    = document.getElementById('msgBubble');
   const aiKeyHint    = document.getElementById('aiKeyHint');
   const voiceBgMask  = document.getElementById('voiceBgMask');
-  const voiceBallWrap= document.getElementById('voiceBallWrap');
   const liquidBar    = document.getElementById('liquidBar');
   const lbText       = document.getElementById('lbText');
   const voiceClose   = document.getElementById('voiceClose');
@@ -644,19 +562,12 @@
   function startVoice() {
     aiKeyHint.classList.remove('show');
     setTimeout(() => {
-      // 遮罩 + 语音球 + 取消按钮同时出现
       voiceBgMask.classList.add('show');
-      voiceBallWrap.classList.add('show');
       voiceClose.classList.add('show');
-      // 稍后开始识别文字
-      setTimeout(() => {
-        liquidBar.classList.add('show');
-        // 等胶囊展开后再打字
-        setTimeout(() => {
-          liquidBar.classList.add('typing');
-          typeVoice();
-        }, 500);
-      }, 800);
+      // 胶囊弹出
+      liquidBar.classList.add('show');
+      // 等入场动画完成后开始打字
+      setTimeout(typeVoice, 600);
     }, 300);
   }
 
@@ -681,9 +592,7 @@
 
   function showResult() {
     voiceBgMask.classList.remove('show');
-    voiceBallWrap.classList.remove('show');
     liquidBar.classList.remove('show');
-    liquidBar.classList.remove('typing');
     voiceClose.classList.remove('show');
     rwQuery.textContent = VOICE_INPUT;
     rwContent.innerHTML = '';
@@ -740,9 +649,7 @@
     clearTimeout(voiceTimer);
     lbText.innerHTML = '';
     voiceBgMask.classList.remove('show');
-    voiceBallWrap.classList.remove('show');
     liquidBar.classList.remove('show');
-    liquidBar.classList.remove('typing');
     voiceClose.classList.remove('show');
     setTimeout(() => aiKeyHint.classList.add('show'), 300);
   });
