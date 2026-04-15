@@ -110,16 +110,6 @@
     .msg-avatar.show { opacity: 1; transform: translateY(0); }
     .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-    /* 底部黑条（遮住微信输入框） */
-    .wechat-bar {
-      position: absolute;
-      left: 403px;
-      top: 800px;
-      width: 794px;
-      height: 70px;
-      background: #1a1a1a;
-    }
-
     /* ── AI键 提示 ── */
     .ai-key-hint {
       position: absolute;
@@ -199,7 +189,7 @@
       align-items: center;
       padding: 0 18px;
       gap: 16px;
-      overflow: hidden;
+      overflow: visible;
       white-space: nowrap;
       opacity: 0;
       pointer-events: none;
@@ -219,55 +209,49 @@
       transform: translateX(-50%) scale(1);
     }
 
-    /* 语音球（mic图标 + 光晕） */
+    /* 语音球（彩虹光晕 + 白圆 + 蓝mic） */
     .lb-ball {
       position: relative;
-      width: 32px;
-      height: 32px;
+      width: 44px;
+      height: 44px;
       flex-shrink: 0;
     }
-    /* 光晕层 */
-    .lb-glow {
+    /* 彩虹光晕 */
+    .lb-ball-glow {
       position: absolute;
       top: 50%; left: 50%;
+      width: 200px; height: 200px;
+      transform: translate(-50%, -50%) rotate(0deg);
+      background: conic-gradient(
+        from 0deg,
+        #ff4d4d 0deg,
+        #ff9900 55deg,
+        #ffe600 110deg,
+        #33cc55 165deg,
+        #33bbff 220deg,
+        #7755ff 275deg,
+        #ee44cc 330deg,
+        #ff4d4d 360deg
+      );
       border-radius: 50%;
-      pointer-events: none;
+      filter: blur(30px);
+      opacity: 0.72;
+      animation: rainbowSpin 7s linear infinite;
     }
-    .lb-glow1 {
-      width: 89px; height: 89px;
-      transform: translate(-50%, -50%);
-      opacity: 0.3;
-      animation: glowPulse 2.4s ease-in-out infinite;
+    @keyframes rainbowSpin {
+      to { transform: translate(-50%, -50%) rotate(360deg); }
     }
-    .lb-glow2 {
-      width: 68px; height: 68px;
-      transform: translate(-50%, -50%);
-      animation: glowPulse 2.4s ease-in-out 0.4s infinite;
-    }
-    .lb-glow3 {
-      width: 52px; height: 52px;
-      transform: translate(-50%, -50%);
-      animation: glowPulse 2.4s ease-in-out 0.8s infinite;
-    }
-    @keyframes glowPulse {
-      0%, 100% { opacity: 0.35; transform: translate(-50%, -50%) scale(1); }
-      50%       { opacity: 0.65; transform: translate(-50%, -50%) scale(1.12); }
-    }
-    /* SVG 环 */
-    .lb-ring {
+    /* 白色圆球 */
+    .lb-ball-inner {
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-    }
-    .lb-ring1 { width: 43px; height: 43px; }
-    .lb-ring2, .lb-ring3 { width: 48px; height: 48px; }
-    /* mic 图标 */
-    .lb-mic {
-      position: absolute;
-      width: 15px; height: 19px;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
+      width: 44px; height: 44px;
+      background: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
       z-index: 1;
+      box-shadow: 0 2px 14px rgba(0,0,0,0.18);
     }
 
     /* 识别文字 */
@@ -471,13 +455,13 @@
     /* 微信输入框插入文字 */
     .wechat-input-text {
       position: absolute;
-      left: 430px;
-      top: 808px;
-      width: 680px;
-      height: 54px;
+      left: 455px;
+      top: 800px;
+      width: 640px;
+      height: 40px;
       display: flex;
       align-items: center;
-      padding: 0 14px;
+      padding: 0 12px;
       color: rgba(255,255,255,0.85);
       font-size: 13px;
       font-family: 'Microsoft YaHei', sans-serif;
@@ -510,9 +494,6 @@
   <!-- 微信窗口 -->
   <img class="wechat-window" src="assets/wechat-window.png" alt="">
 
-  <!-- 底部黑条 -->
-  <div class="wechat-bar"></div>
-
   <!-- 头像 -->
   <div class="msg-avatar" id="msgAvatar"><img src="assets/avatar.png" alt=""></div>
 
@@ -539,13 +520,10 @@
   <!-- 液态输入条（球 + 文字一体） -->
   <div class="liquid-bar" id="liquidBar">
     <div class="lb-ball">
-      <img class="lb-glow lb-glow1" src="assets/lb-glow1.png" alt="">
-      <img class="lb-glow lb-glow2" src="assets/lb-glow2.png" alt="">
-      <img class="lb-glow lb-glow3" src="assets/lb-glow3.png" alt="">
-      <img class="lb-ring lb-ring1" src="assets/lb-ring1.svg" alt="">
-      <img class="lb-ring lb-ring2" src="assets/lb-ring2.svg" alt="">
-      <img class="lb-ring lb-ring3" src="assets/lb-ring3.svg" alt="">
-      <img class="lb-mic" src="assets/lb-mic.svg" alt="">
+      <div class="lb-ball-glow"></div>
+      <div class="lb-ball-inner">
+        <img src="assets/lb-mic.svg" alt="" width="15" height="19">
+      </div>
     </div>
     <div class="lb-text" id="lbText"></div>
   </div>
